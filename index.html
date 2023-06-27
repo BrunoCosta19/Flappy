@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Flappy Bird</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+    }
+
+    #gameCanvas {
+      display: block;
+      margin: 0 auto;
+      background-color: #f8f8f8;
+      border: 1px solid #000;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas" width="400" height="600"></canvas>
+
+  <script>
+    // Configurações do jogo
+    const gravity = 0.5;
+    const jumpForce = 8;
+    const pipeGap = 200;
+    const pipeFrequency = 1500;
+
+    // Elementos do jogo
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    let bird, pipes;
+    let score = 0;
+    let isGameOver = false;
+
+    // Classe Bird
+    class Bird {
+      constructor() {
+        this.x = 50;
+        this.y = canvas.height / 2;
+        this.velocity = 0;
+      }
+
+      update() {
+        this.velocity += gravity;
+        this.y += this.velocity;
+      }
+
+      flap() {
+        this.velocity = -jumpForce;
+      }
+
+      draw() {
+        ctx.fillStyle = "#f44336";
+        ctx.fillRect(this.x, this.y, 25, 25);
+      }
+    }
+
+    // Classe Pipe
+    class Pipe {
+      constructor() {
+        this.x = canvas.width;
+        this.y = Math.floor(Math.random() * (canvas.height - pipeGap));
+        this.width = 80;
+        this.speed = 3;
+        this.isPassed = false;
+      }
+
+      update() {
+        this.x -= this.speed;
+      }
+
+      draw() {
+        ctx.fillStyle = "#4caf50";
+        ctx.fillRect(this.x, 0, this.width, this.y);
+        ctx.fillRect(this.x, this.y + pipeGap, this.width, canvas.height - (this.y + pipeGap));
+      }
+
+      collide(bird) {
+        if (
+          bird.x < this.x + this.width &&
+          bird.x + 25 > this.x &&
+          (bird.y < this.y || bird.y + 25 > this.y + pipeGap)
+        ) {
+          return true;
+        }
+        return false;
+      }
+    }
+
+    // Função principal do jogo
+    function gameLoop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      bird.update();
+      bird.draw();
+
+      if (!isGameOver) {
+        for (let i = 0; i < pipes.length; i++) {
+          pipes[i].update();
+          pipes[i].draw();
+
+          if (pipes[i].collide(bird)) {
+            isGameOver = true;
+            break;
+          }
+
+          if (pipes[i].x + pipes[i].width < bird.x && !pipes[i].isPassed) {
+            score++;
+            pipes[i].isPassed = true;
+          }
+        }
+
+        if (bird.y + 25 > canvas.height || bird.y < 0) {
+          isGameOver = true;
+        }
+      }
+
+      ctx.fillStyle = "#000";
+      ctx.font = "24px Arial";
+      ctx.fillText(`Score: ${score}`, 10, 30);
+
+      if (isGameOver) {
+        ctx.font = "48px Arial";
+        ctx.fillText("Game Over", canvas.width / 2 - 120, canvas.height / 2);
+        ctx.font = "24px Arial";
+        ctx.fillText("Click to Restart", canvas.width / 2 - 100, canvas.height / 2 + 40);
+      } else {
+        requestAnimationFrame(gameLoop);
+      }
+    }
+
+    // Reiniciar o jogo
+    function restartGame() {
+      bird = new Bird();
+      pipes = [];
+      score = 0;
+      isGameOver = false;
+      gameLoop();
+    }
+
+    // Evento de clique para fazer o pássaro pular
+    document.addEventListener("click", function() {
+      if (!isGameOver) {
+        bird.flap();
+      } else {
+        restartGame();
+      }
+    });
+
+    // Inicialização do jogo
+    restartGame();
+  </script>
+</body>
+</html>
